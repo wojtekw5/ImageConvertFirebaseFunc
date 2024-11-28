@@ -1,0 +1,6 @@
+specVersion: v1alpha1
+endpoints:
+  resize_image:
+    region: us-central1
+    entryPoint: resize_image
+    httpsTrigger: {}

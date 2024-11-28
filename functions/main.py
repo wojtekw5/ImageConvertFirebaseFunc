@@ -1,11 +1,16 @@
 import functions_framework
-from google.cloud import storage
 from flask import request, jsonify, send_file
 from PIL import Image
 from io import BytesIO
 
-# Inicjalizacja klienta Cloud Storage
-storage_client = storage.Client()
+import firebase_admin
+from firebase_admin import credentials, storage
+
+# Inicjalizacja Firebase Admin SDK
+cred = credentials.Certificate("C:/Users/wojte/Desktop/cloudspark-42ed1-firebase-adminsdk-8ks4v-51268fcc0a.json")
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'cloudspark-42ed1.firebasestorage.app/images'
+})
 
 @functions_framework.http
 def resize_image(request):
@@ -16,17 +21,27 @@ def resize_image(request):
 
         # Odbierz parametry z żądania
         data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON payload"}), 400
+
         bucket_name = data.get('bucket')  # Nazwa bucketa
         file_name = data.get('file_name')  # Nazwa pliku
-        target_width = int(data.get('width'))  # Docelowa szerokość
-        target_height = int(data.get('height'))  # Docelowa wysokość
+        target_width = data.get('width')  # Docelowa szerokość
+        target_height = data.get('height')  # Docelowa wysokość
 
         if not all([bucket_name, file_name, target_width, target_height]):
             return jsonify({"error": "Missing required parameters"}), 400
 
+        # Konwersja szerokości i wysokości na liczby całkowite
+        target_width = int(target_width)
+        target_height = int(target_height)
+
         # Pobierz obraz z Firebase Storage
-        bucket = storage_client.bucket(bucket_name)
+        bucket = storage.bucket(bucket_name)
         blob = bucket.blob(file_name)
+        if not blob.exists():
+            return jsonify({"error": f"File '{file_name}' not found in bucket '{bucket_name}'"}), 404
+
         image_data = blob.download_as_bytes()
 
         # Otwórz obraz za pomocą Pillow
