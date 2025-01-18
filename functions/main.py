@@ -77,12 +77,12 @@ def resize_image(request):
         resized_image = image.resize((target_width, target_height))
 
         # save new image as bytes stream
-        output = BytesIO()
-        output_format = image.format or "JPEG"
-        resized_image.save(output, format=output_format)
+        output = BytesIO() #new empty bytes stream 
+        output_format = image.format or "JPEG" # set image format or "JPEG" if not specified
+        resized_image.save(output, format=output_format) #save resized image in stream 
         output.seek(0)   # set the file pointer to the beginning (its at the end after saving)
 
-        # Wysyłanie zmodyfikowanego obrazu jako odpowiedź HTTP
+        # sent image as http response
         return send_file(output, mimetype=f'image/{output_format.lower()}')  #mimetype = 'image/jpeg'
 
     except Exception as e:
